@@ -10,31 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Download JAR from Release
+        run: |
+          mkdir -p ./downloaded-jar
+          curl -L -o ./downloaded-jar/TiebaSignIn.jar \
+            https://github.com/ZhianLin/TiebaSignIn-1/releases/download/master/TiebaSignIn.jar
 
-      - name: Cache Maven dependencies and build output
-        uses: actions/cache@v3
-        id: cache
-        with:
-          path: |
-            ~/.m2/repository
-            target/
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Verify JAR exists
+        run: |
+          ls -la ./downloaded-jar/
+          [ -f ./downloaded-jar/TiebaSignIn.jar ] || exit 1
 
-      - name: Set up JDK 1.8
+      - name: Set up JDK 8 (for execution only)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '8'
-
-      - name: Build only if cache missed
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: mvn package
 
       - name: Run the application
         env:
           BDUSS: ${{ secrets.BDUSS }}
           SCKEY: ${{ secrets.SCKEY }}
         run: |
-          JAR_FILE=$(ls target/*.jar | head -n 1)
-          java -jar "$JAR_FILE" "${BDUSS}" "${SCKEY}"
+          java -jar ./downloaded-jar/TiebaSignIn.jar "${BDUSS}" "${SCKEY}"
