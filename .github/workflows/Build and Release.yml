@@ -21,12 +21,18 @@ jobs:
       - name: Build with Maven
         run: |
           mvn clean package
-          ls -la target/  # 列出target目录确认文件
+          ls -la target/  # 调试：列出所有生成文件
 
       - name: Find JAR file
         id: find_jar
         run: |
-          JAR_PATH=$(ls target/*-jar-with-dependencies.jar)
+          # 查找所有可能的JAR文件
+          JAR_PATH=$(find target/ -name '*.jar' ! -name '*-original.jar' | head -1)
+          if [ -z "$JAR_PATH" ]; then
+            echo "::error::No JAR file found in target directory!"
+            ls -la target/
+            exit 1
+          fi
           echo "JAR_PATH=${JAR_PATH}" >> $GITHUB_OUTPUT
           echo "Found JAR at: ${JAR_PATH}"
 
