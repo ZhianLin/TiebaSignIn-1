@@ -1,4 +1,5 @@
-name: Run Tieba SignIn
+# .github/workflows/run-from-release.yml
+name: Run from Release
 
 on:
   workflow_dispatch:
@@ -6,20 +7,19 @@ on:
     - cron: '10 0 * * *'
 
 jobs:
-  TiebaSignIn:
+  run:
     runs-on: ubuntu-latest
-
     steps:
       - name: Download JAR
         run: |
-          mkdir -p ./downloaded-jar
-          curl -L -o ./downloaded-jar/TiebaSignIn.jar \
-            https://github.com/ZhianLin/TiebaSignIn-1/releases/download/master/TiebaSignIn.jar
-
+          mkdir -p ./app
+          curl -L -o ./app/TiebaSignIn.jar \
+            "https://github.com/ZhianLin/TiebaSignIn-1/releases/latest/download/TiebaSignIn.jar"
+          
       - name: Verify JAR
         run: |
-          if ! unzip -q -t ./downloaded-jar/TiebaSignIn.jar; then
-            echo "::error::Downloaded JAR is corrupt"
+          if ! unzip -q -t ./app/TiebaSignIn.jar; then
+            echo "::error::JAR文件损坏或下载失败"
             exit 1
           fi
 
@@ -29,15 +29,9 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
 
-      - name: Run (with fallback)
+      - name: Run Application
         env:
           BDUSS: ${{ secrets.BDUSS }}
           SCKEY: ${{ secrets.SCKEY }}
         run: |
-          # 尝试两种运行方式
-          if java -jar ./downloaded-jar/TiebaSignIn.jar "${BDUSS}" "${SCKEY}"; then
-            exit 0
-          else
-            echo "::warning::Fallback to explicit class execution"
-            java -cp ./downloaded-jar/TiebaSignIn.jar top.srcrs.Run "${BDUSS}" "${SCKEY}"
-          fi
+          java -jar ./app/TiebaSignIn.jar "${BDUSS}" "${SCKEY}"
