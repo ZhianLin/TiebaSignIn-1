@@ -1,35 +1,43 @@
 name: Run Tieba SignIn
 
 on:
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
   schedule:
-    - cron: '10 0 * * *'  # 每天 UTC 0:10（北京时间 8:10）自动运行
+    - cron: '10 0 * * *'
 
 jobs:
   TiebaSignIn:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download JAR from Release
+      - name: Download JAR
         run: |
           mkdir -p ./downloaded-jar
           curl -L -o ./downloaded-jar/TiebaSignIn.jar \
             https://github.com/ZhianLin/TiebaSignIn-1/releases/download/master/TiebaSignIn.jar
 
-      - name: Verify JAR exists
+      - name: Verify JAR
         run: |
-          ls -la ./downloaded-jar/
-          [ -f ./downloaded-jar/TiebaSignIn.jar ] || exit 1
+          if ! unzip -q -t ./downloaded-jar/TiebaSignIn.jar; then
+            echo "::error::Downloaded JAR is corrupt"
+            exit 1
+          fi
 
-      - name: Set up JDK 8 (for execution only)
+      - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '8'
 
-      - name: Run the application
+      - name: Run (with fallback)
         env:
           BDUSS: ${{ secrets.BDUSS }}
           SCKEY: ${{ secrets.SCKEY }}
         run: |
-          java -jar ./downloaded-jar/TiebaSignIn.jar "${BDUSS}" "${SCKEY}"
+          # 尝试两种运行方式
+          if java -jar ./downloaded-jar/TiebaSignIn.jar "${BDUSS}" "${SCKEY}"; then
+            exit 0
+          else
+            echo "::warning::Fallback to explicit class execution"
+            java -cp ./downloaded-jar/TiebaSignIn.jar top.srcrs.Run "${BDUSS}" "${SCKEY}"
+          fi
