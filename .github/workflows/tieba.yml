@@ -14,7 +14,7 @@ jobs:
         run: |
           mkdir -p ./app
           curl -L -o ./app/TiebaSignIn.jar \
-            "https://github.com/ZhianLin/TiebaSignIn-1/releases/latest/download/TiebaSignIn.jar"
+            "https://github.com/ZhianLin/TiebaSignIn-1/releases/download/master/TiebaSignIn-1.0-SNAPSHOT-jar-with-dependencies.jar"
           
       - name: Verify JAR
         run: |
